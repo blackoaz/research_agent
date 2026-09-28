@@ -1,32 +1,3 @@
-# from langchain_community.tools import WikipediaQueryRun, DuckDuckGoSearchRun
-# from langchain_community.utilities import WikipediaAPIWrapper
-# from langchain.tools import Tool
-# from datetime import datetime
-
-# def save_to_txt(data: str, filename: str = "research_output.txt"):
-#     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-#     formatted_text = f"--- Research Output ---\nTimestamp: {timestamp}\n\n{data}\n\n"
-
-#     with open(filename, "a", encoding="utf-8") as f:
-#         f.write(formatted_text)
-    
-#     return f"Data successfully saved to {filename}"
-
-# save_tool = Tool(
-#     name="save_text_to_file",
-#     func=save_to_txt,
-#     description="Saves structured research data to a text file.",
-# )
-
-# search = DuckDuckGoSearchRun()
-# search_tool = Tool(
-#     name="search",
-#     func=search.run,
-#     description="Search the web for information",
-# )
-
-# api_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=100)
-# wiki_tool = WikipediaQueryRun(api_wrapper=api_wrapper)
 
 from datetime import datetime
 
@@ -37,6 +8,7 @@ from langchain_community.tools import (
 )
 from langchain_community.utilities import WikipediaAPIWrapper
 
+
 # SAVE RESEARCH TO FILE
 
 @tool
@@ -44,8 +16,7 @@ def save_to_txt(data: str, filename: str = "research_output.txt") -> str:
     """
     Save research results to a text file.
 
-    Use this tool when the user wants the research results
-    saved to a file.
+    Use this tool when the user asks to save research results.
     """
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -62,7 +33,7 @@ def save_to_txt(data: str, filename: str = "research_output.txt") -> str:
     return f"Research successfully saved to {filename}"
 
 
-# WEB SEARCH TOOL
+# WEB SEARCH
 
 search = DuckDuckGoSearchRun()
 
@@ -70,18 +41,22 @@ search = DuckDuckGoSearchRun()
 @tool
 def search_web(query: str) -> str:
     """
-    Search the internet for current or general information.
+    Search the internet for information.
 
-    Use this tool when the user asks about a topic that requires
-    web research or information that may not be available from
-    the model's existing knowledge.
+    Use this tool when current information or external
+    research is required.
     """
 
-    return search.run(query)
+    try:
+        return search.run(query)
+
+    except Exception as e:
+        return (
+            f"Web search failed. Error: {str(e)}"
+        )
 
 
-
-# WIKIPEDIA TOOL
+# WIKIPEDIA
 
 api_wrapper = WikipediaAPIWrapper(
     top_k_results=1,
@@ -93,17 +68,29 @@ wiki = WikipediaQueryRun(
 )
 
 
-# Export the Wikipedia tool directly because it is already
-# a LangChain tool.
-wiki_tool = wiki
+@tool
+def search_wikipedia(query: str) -> str:
+    """
+    Search Wikipedia for background information.
 
+    Use this tool when Wikipedia is useful for researching
+    a topic.
+    """
 
-# TOOL LIST
+    try:
+        return wiki.run(query)
+
+    except Exception as e:
+        return (
+            f"Wikipedia search failed. "
+            f"Please use the web search tool instead. "
+            f"Error: {str(e)}"
+        )
+
+# AVAILABLE TOOLS
 
 tools = [
     search_web,
-    wiki_tool,
+    search_wikipedia,
     save_to_txt,
 ]
-
-
